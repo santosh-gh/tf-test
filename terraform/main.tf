@@ -14,10 +14,32 @@ provider "azurerm" {
   features {}
 }
 
+terraform {
+  backend "azurerm" {
+    storage_account_name = "tfstatestg11"
+    container_name       = "tfstate"
+    key                  = "terraform-state"
+    access_key           = "JiqZSd8okjexcCQksWsIV4wZXGpZTpSdpw5i0IEPOekMrjiJ8d3DsJdgPOEaIg4tZYxWLnQSCWw1+AStpqSuvA=="
+  }
+}
+
+
+locals {
+  storage_account_prefix = "test"
+}
+
 resource "azurerm_resource_group" "rg" {
   name     = var.resource_group_name
   location = var.location
   tags     = var.tags
+}
+
+module "log_analytics_workspace" {
+  source                           = "./modules/log_analytics"
+  name                             = var.log_analytics_workspace_name
+  location                         = var.location
+  resource_group_name              = azurerm_resource_group.rg.name
+  solution_plan_map                = var.solution_plan_map
 }
 
 # Create a Virtual Network
@@ -56,7 +78,7 @@ module "virtual_machine" {
   os_disk_image                       = var.vm_os_disk_image
   domain_name_label                   = var.domain_name_label
   resource_group_name                 = azurerm_resource_group.rg.name
-  subnet_id                           = module.vnet1.subnet_ids["subnet1"]
+  subnet_id                           = module.vnet1.subnet_ids["subnet2"]
   os_disk_storage_account_type        = var.vm_os_disk_storage_account_type
   # boot_diagnostics_storage_account    = module.storage_account.primary_blob_endpoint
   # log_analytics_workspace_id          = module.log_analytics_workspace.workspace_id
@@ -67,4 +89,34 @@ module "virtual_machine" {
   # script_storage_account_key          = var.script_storage_account_key
   # container_name                      = var.container_name
   # script_name                         = var.script_name
+}
+
+module "bastion_host" {
+  source                       = "./modules/bastion_host"
+  name                         = var.bastion_host_name
+  location                     = var.location
+  resource_group_name          = azurerm_resource_group.rg.name
+  subnet_id                    = module.vnet1.subnet_ids["subnet1"]
+  # log_analytics_workspace_id   = module.log_analytics_workspace.id
+  # log_analytics_retention_days = var.log_analytics_retention_days
+}
+
+
+# Generate randon name for virtual machine
+resource "random_string" "storage_account_suffix" {
+  length  = 8
+  special = false
+  lower   = true
+  upper   = false
+  numeric  = false
+}
+
+module "storage_account" {
+  source                      = "./modules/storage_account"
+  name                        = "${local.storage_account_prefix}${random_string.storage_account_suffix.result}"
+  location                    = var.location
+  resource_group_name         = azurerm_resource_group.rg.name
+  account_kind                = var.storage_account_kind
+  account_tier                = var.storage_account_tier
+  replication_type            = var.storage_account_replication_type
 }

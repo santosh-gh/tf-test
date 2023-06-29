@@ -17,6 +17,30 @@ variable "tags" {
   }
 }
 
+# Log Analytics Worksace
+variable "log_analytics_workspace_name" {
+  description = "Specifies the name of the log analytics workspace"
+  default     = "testWorkspace"
+  type        = string
+}
+
+variable "log_analytics_retention_days" {
+  description = "Specifies the number of days of the retention policy"
+  type        = number
+  default     = 7
+}
+
+variable "solution_plan_map" {
+  description = "Specifies solutions to deploy to log analytics workspace"
+  default     = {
+    ContainerInsights= {
+      product   = "OMSGallery/ContainerInsights"
+      publisher = "Microsoft"
+    }
+  }
+  type = map(any)
+}
+
 # Virtual Network
 variable "vnet1_name" {
   description = "Specifies the name of the hub virtual virtual network"
@@ -101,8 +125,50 @@ variable "admin_password" {
   default     = "Welcome@2022"
 }
 
-variable "ssh_public_key" {
-  description = "(Required) Specifies the SSH public key for the jumpbox virtual machine and AKS worker nodes."
+# variable "ssh_public_key" {
+#   description = "(Required) Specifies the SSH public key for the jumpbox virtual machine and AKS worker nodes."
+#   type        = string
+#   default        = "xx"
+# }
+
+
+# Bastion Host
+variable "bastion_host_name" {
+  description = "(Optional) Specifies the name of the bastion host"
+  default     = "BaboBastionHost"
   type        = string
-  default        = "AAAAB3NzaC1yc2EAAAADAQABAAACAQDR8ZrgXQ/1MeAv5Fc/B5ldKJW6H4Rr0OI/5EfSvfvyIxsaTu8/yeHjNVmWSsTLAwuLaMdKL63gwz9tdynPuFPyH4POsouLkUHnLsKBo40JGXDRzTTZTKrRCktFqAv+9j9GTFLoOrViksfNzNGoEx2KBiWRst47RmUdOeENg6NmX7Kv/p/srM/rtUI0Ky0u2AGvcahnvc4b9ZIbyykZKc6Rs2kHIq7BQQi5g4rdL+/wwfrHqmvOgJFTOuwAWJqqwhpnwxPpV5yfBee4+JRO0Xikc0hvJ9Y/ozoExmvyZDPj/n6og69IjTAA2xD1QkYHfNzxcWu8pFyC3ZTMSyqsO2LGKXt07uJHc8boAxe9YaJt/XWT6Z4WnG4s7QG8u25j9ZnoNpWYQv18I0EXIAa6NVhwpwqBJVB8nMExi2trmrxoGTsZaq+z+cnRBx0rbzNrlbHuXMZSTu7hg5mFwORFs4ly7ReVnLUxYdGrFWfp+7ZszatPCYXuZewLno8FjsulGCQhtCtZP60oskABM3SPmxo1ZoZLE2BDRygnkYNL9d8x5dg+FTPrUgl9uVxEHKE5/p1eO2frug5uvuFNaMhWpkaIepX/htd90zapfgxxT86y1kLCSBPZG8wUD1CIBPlCVBqkJh29R85ImX4pgBg3bijuJYB4bmtaKjTpl8MOttvtBQ== home@DESKTOP-9B1KCVG"
+}
+
+# Storage
+variable "storage_account_kind" {
+  description = "(Optional) Specifies the account kind of the storage account"
+  default     = "StorageV2"
+  type        = string
+
+   validation {
+    condition = contains(["Storage", "StorageV2"], var.storage_account_kind)
+    error_message = "The account kind of the storage account is invalid."
+  }
+}
+
+variable "storage_account_tier" {
+  description = "(Optional) Specifies the account tier of the storage account"
+  default     = "Standard"
+  type        = string
+
+   validation {
+    condition = contains(["Standard", "Premium"], var.storage_account_tier)
+    error_message = "The account tier of the storage account is invalid."
+  }
+}
+
+variable "storage_account_replication_type" {
+  description = "(Optional) Specifies the replication type of the storage account"
+  default     = "LRS"
+  type        = string
+
+  validation {
+    condition = contains(["LRS", "ZRS", "GRS", "GZRS", "RA-GRS", "RA-GZRS"], var.storage_account_replication_type)
+    error_message = "The replication type of the storage account is invalid."
+  }
 }
