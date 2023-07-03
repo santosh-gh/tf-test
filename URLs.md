@@ -1,0 +1,1 @@
+https://github.com/hashicorp/terraform-provider-azurerm/blob/main/examples/
